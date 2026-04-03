@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MEC 2026 · 展会助手</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#f4f6f9;--white:#fff;--primary:#005aff;--primary-light:#e8f0ff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--green:#10b981;--shadow:0 1px 4px rgba(0,0,0,0.09)}
+body{background:var(--bg);font-family:'Noto Sans SC',-apple-system,sans-serif;color:var(--text);max-width:480px;margin:0 auto;min-height:100vh}
+.hdr{background:var(--primary);padding:16px 16px 0;position:sticky;top:0;z-index:10}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.hdr-title{color:#fff;font-size:16px;font-weight:700}
+.hdr-badge{background:rgba(255,255,255,.18);color:#fff;font-size:11px;padding:3px 10px;border-radius:20px}
+.tabs{display:flex}
+.tab{flex:1;text-align:center;padding:10px 0;color:rgba(255,255,255,.65);font-size:13px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab.active{color:#fff;border-bottom-color:#fff;font-weight:600}
+.panel{display:none;padding:12px 16px 80px}
+.panel.active{display:block}
+.search-box{background:#fff;border-radius:10px;display:flex;align-items:flex-end;padding:10px 12px;gap:8px;box-shadow:var(--shadow);margin-bottom:10px}
+textarea{flex:1;border:none;outline:none;font-family:'Noto Sans SC',sans-serif;font-size:14px;color:var(--text);resize:none;height:56px;line-height:1.5;background:transparent}
+textarea::placeholder{color:#9ca3af}
+.send-btn{width:40px;height:40px;background:var(--primary);border:none;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform .15s,opacity .15s}
+.send-btn:active{transform:scale(.93)}
+.send-btn:disabled{opacity:.4}
+.send-btn svg{width:20px;height:20px;fill:white}
+.quick-tags{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;margin-bottom:12px}
+.quick-tags::-webkit-scrollbar{display:none}
+.qtag{background:#fff;border:1px solid var(--border);color:var(--muted);font-size:12px;padding:5px 12px;border-radius:20px;white-space:nowrap;cursor:pointer;flex-shrink:0}
+.qtag:active{background:var(--primary-light);border-color:var(--primary);color:var(--primary)}
+.loading{display:none;text-align:center;padding:32px 0}
+.dots{display:flex;justify-content:center;gap:6px;margin-bottom:10px}
+.dot{width:8px;height:8px;background:var(--primary);border-radius:50%;animation:bounce 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+.loading p{font-size:13px;color:var(--muted)}
+.query-echo{background:var(--primary-light);border-left:3px solid var(--primary);padding:10px 12px;border-radius:0 8px 8px 0;margin-bottom:12px;font-size:13px;color:var(--primary);display:none}
+.results{display:none}
+.section-label{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px}
+.rcard{background:#fff;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;gap:12px;animation:up .25s ease both}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.rank{font-size:22px;font-weight:700;color:#d1d5db;min-width:28px;line-height:1.1;padding-top:2px}
+.rank.r1{color:#f59e0b}.rank.r2{color:#9ca3af}.rank.r3{color:#cd7f32}
+.rbody{flex:1;min-width:0}
+.rtop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:5px}
+.rname{font-size:14px;font-weight:600;line-height:1.3;flex:1}
+.ptag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+.ptag.must{background:#fef3c7;color:#92400e}
+.ptag.worth{background:#dbeafe;color:#1e40af}
+.ptag.pass{background:#f3f4f6;color:#6b7280}
+.rloc{font-size:12px;color:var(--primary);font-weight:600;margin-bottom:5px}
+.rdesc{font-size:13px;color:var(--muted);line-height:1.5}
+.rreason{font-size:12px;color:var(--green);margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+.route-box{background:#fff;border-radius:12px;padding:14px;margin-top:4px;box-shadow:var(--shadow)}
+.route-box h4{font-size:13px;font-weight:600;margin-bottom:6px}
+.route-box p{font-size:13px;color:var(--muted);line-height:1.6}
+.error-box{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;font-size:13px;color:#dc2626;display:none;margin-bottom:10px}
+.welcome{text-align:center;padding:48px 0}
+.welcome-icon{font-size:48px;margin-bottom:16px}
+.welcome h2{font-size:18px;font-weight:600;margin-bottom:8px}
+.welcome p{font-size:13px;color:var(--muted);line-height:1.7}
+.zone{background:#fff;border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
+.zhdr{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer}
+.zdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.zname{font-size:14px;font-weight:600;flex:1}
+.zcnt{font-size:11px;color:var(--muted);background:var(--bg);padding:2px 8px;border-radius:10px}
+.zarr{color:var(--muted);font-size:12px;transition:transform .2s}
+.zone.open .zarr{transform:rotate(90deg)}
+.zbody{display:none;border-top:1px solid var(--border)}
+.zone.open .zbody{display:block}
+.brow{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border)}
+.brow:last-child{border-bottom:none}
+.bnum{font-size:11px;color:var(--primary);font-weight:600;min-width:44px;padding-top:2px}
+.binfo{flex:1}
+.bname{font-size:13px;font-weight:500;line-height:1.4;margin-bottom:2px}
+.bdesc{font-size:11px;color:var(--muted)}
+.btag{display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;margin-top:3px;font-weight:500}
+.btag.must{background:#fef3c7;color:#92400e}
+.btag.worth{background:#dbeafe;color:#1e40af}
+.btag.pass{background:#f3f4f6;color:#6b7280}
+.footer{text-align:center;padding:20px 16px 0;font-size:11px;color:#d1d5db}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="hdr-title">🏭 MEC 2026 · 2号馆</div>
+    <div class="hdr-badge">深圳国际会展中心</div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('search')">🔍 智能匹配</div>
+    <div class="tab" onclick="switchTab('browse')">🗂 按展区</div>
+  </div>
+</div>
+
+<!-- 搜索面板 -->
+<div class="panel active" id="panel-search">
+  <div class="search-box" style="margin-top:12px">
+    <textarea id="query" placeholder="告诉我你在找什么…&#10;What are you looking for?"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="doSearch()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+  <div class="quick-tags">
+    <div class="qtag" onclick="fill('AI自动化设备和机器人')">🤖 AI自动化</div>
+    <div class="qtag" onclick="fill('精密金属零部件加工')">⚙️ 精密零件</div>
+    <div class="qtag" onclick="fill('医疗影像光学设备')">🔬 医疗影像</div>
+    <div class="qtag" onclick="fill('激光光电技术')">💡 激光光电</div>
+    <div class="qtag" onclick="fill('PCB电路板电子元器件')">📟 电子元器件</div>
+    <div class="qtag" onclick="fill('供应链管理软件MES')">💻 供应链软件</div>
+    <div class="qtag" onclick="fill('医疗耗材橡胶塑料注塑')">🧪 耗材注塑</div>
+    <div class="qtag" onclick="fill('找投资或合作的商机')">💼 商机合作</div>
+  </div>
+  <div class="error-box" id="errorBox"></div>
+  <div class="loading" id="loading">
+    <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <p>AI 正在匹配最适合你的展商…</p>
+  </div>
+  <div class="query-echo" id="queryEcho"></div>
+  <div class="results" id="results">
+    <div class="section-label">推荐拜访顺序</div>
+    <div id="cards"></div>
+    <div class="route-box" id="routeBox" style="display:none">
+      <h4>📍 动线建议</h4>
+      <p id="routeText"></p>
+    </div>
+  </div>
+  <div class="welcome" id="welcome">
+    <div class="welcome-icon">🗺️</div>
+    <h2>今天想找什么？</h2>
+    <p>用自己的话描述需求<br>AI 从 200+ 家展商里<br>为你找出最值得拜访的<br><br>支持中英文输入</p>
+  </div>
+  <div class="footer">Powered by AI · MEC 2026 深圳</div>
+</div>
+
+<!-- 展区面板 -->
+<div class="panel" id="panel-browse">
+  <div class="zone" id="z1">
+    <div class="zhdr" onclick="toggleZ('z1')">
+      <div class="zdot" style="background:#ef4444"></div>
+      <div class="zname">🔴 智能制造供应链展区</div>
+      <div class="zcnt">20家</div><div class="zarr">▶</div>
+    </div>
+    <div class="zbody">
+      <div class="brow"><div class="bnum">2-C03</div><div class="binfo"><div class="bname">华为技术有限公司</div><div class="bdesc">医疗AI基础设施、智慧工厂</div><span class="btag must">必去</span></div></div>
+      <div class="brow"><div class="bnum">2-C57</div><div class="binfo"><div class="bname">海克斯康制造智能技术（深圳）</div><div class="bdesc">AI质检、数字孪生</div><span class="btag must">必去</span></div></div>
+      <div class="brow"><div class="bnum">2-G01</div><div class="binfo"><div class="bname">上海发那科智能机械有限公司</div><div class="bdesc">工业机器人No.1</div><span class="btag must">必去</span></div></div>
+      <div class="brow"><div class="bnum">2-A42</div><div class="binfo"><div class="bname">深圳市凯瑞奇自动化技术有限公司</div><div class="bdesc">医疗自动化整线方案</div><span class="btag must">必去</span></div></div>
+      <div class="brow"><div class="bnum">2-A70</div><div class="binfo"><div class="bname">东莞恰合达自动化股份有限公司</div><div class="bdesc">自动化装配设备</div><span class="btag must">必去</span></div></div>
+      <div class="brow"><div class="bnum">2-C01</div><div class="binfo"><div class="bname">深圳华大基因股份有限公司</div><div class="bdesc">基因测序+AI诊断</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-C01</div><div class="binfo"><div class="bname">深圳市迅龙软件有限公司</div><div class="bdesc">医疗供应链管理软件</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-C36</div><div class="binfo"><div class="bname">苏州瀚码智能技术有限公司</div><div class="bdesc">智能追溯系统</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-C38</div><div class="binfo"><div class="bname">迈得医疗工业设备股份有限公司</div><div class="bdesc">医疗器械专用工业设备</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-C40</div><div class="binfo"><div class="bname">冠骋信息技术（苏州）有限公司</div><div class="bdesc">MES制造执行系统</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-D22</div><div class="binfo"><div class="bname">海克斯康制造智能技术（深圳）</div><div class="bdesc">智能制造检测</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-D62</div><div class="binfo"><div class="bname">东莞市创远光电自动化有限公司</div><div class="bdesc">光电自动化设备</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-F06</div><div class="binfo"><div class="bname">深圳市北谌自动化设备有限公司</div><div class="bdesc">非标自动化设备</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-F69</div><div class="binfo"><div class="bname">创联三维科技（青岛）有限公司</div><div class="bdesc">3D打印增材制造</div><span class="btag worth">值得看</span></div></div>
+    </div>
+  </div>
+
+  <div class="zone" id="z2">
+    <div class="zhdr" onclick="toggleZ('z2')">
+      <div class="zdot" style="background:#3b82f6"></div>
+      <div class="zname">🔵 GE医疗供应链生态展区</div>
+      <div class="zcnt">6家</div><div class="zarr">▶</div>
+    </div>
+    <div class="zbody">
+      <div class="brow"><div class="bnum">2-H01</div><div class="binfo"><div class="bname">惠州西文思技术股份有限公司</div><div class="bdesc">医疗电子精密制造，GE核心供应商</div><span class="btag must">必去</span></div></div>
+      <div class="brow"><div class="bnum">2-H04</div><div class="binfo"><div class="bname">厦门麦克玛视电子信息技术有限公司</div><div class="bdesc">机器视觉检测系统</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-H05</div><div class="binfo"><div class="bname">宁波翌波光电科技有限公司</div><div class="bdesc">光电传感探测</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-H23</div><div class="binfo"><div class="bname">福瑞博工业自动化（上海）有限公司</div><div class="bdesc">工业自动化整体方案</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-H10</div><div class="binfo"><div class="bname">格伦汀普莱斯（中国）精密冷机械</div><div class="bdesc">精密冷机械设备</div><span class="btag pass">顺路看</span></div></div>
+      <div class="brow"><div class="bnum">2-H12</div><div class="binfo"><div class="bname">上海升广科技有限公司</div><div class="bdesc">工业自动化配件</div><span class="btag pass">顺路看</span></div></div>
+    </div>
+  </div>
+
+  <div class="zone" id="z3">
+    <div class="zhdr" onclick="toggleZ('z3')">
+      <div class="zdot" style="background:#10b981"></div>
+      <div class="zname">🟢 迈瑞医疗供应链生态展区</div>
+      <div class="zcnt">15家</div><div class="zarr">▶</div>
+    </div>
+    <div class="zbody">
+      <div class="brow"><div class="bnum">2-A42</div><div class="binfo"><div class="bname">深圳市凯瑞奇自动化技术有限公司</div><div class="bdesc">医疗自动化整线</div><span class="btag must">必去</span></div></div>
+      <div class="brow"><div class="bnum">2-A45</div><div class="binfo"><div class="bname">深圳市康冠医疗设备有限公司</div><div class="bdesc">医疗显示终端</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-A66</div><div class="binfo"><div class="bname">深圳市巨烽显示科技有限公司</div><div class="bdesc">医疗级显示屏</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-A67</div><div class="binfo"><div class="bname">重庆仪仅自动化股份有限公司</div><div class="bdesc">自动化设备</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-A70</div><div class="binfo"><div class="bname">东莞恰合达自动化股份有限公司</div><div class="bdesc">自动化装配</div><span class="btag must">必去</span></div></div>
+      <div class="brow"><div class="bnum">2-A58</div><div class="binfo"><div class="bname">深圳市三维机电设备有限公司</div><div class="bdesc">机电一体化设备</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-B40</div><div class="binfo"><div class="bname">浙江东尼电子股份有限公司</div><div class="bdesc">医用细钢丝绳</div><span class="btag pass">顺路看</span></div></div>
+      <div class="brow"><div class="bnum">2-B67</div><div class="binfo"><div class="bname">深圳市杰准精密机械有限公司</div><div class="bdesc">精密机械加工</div><span class="btag pass">顺路看</span></div></div>
+    </div>
+  </div>
+
+  <div class="zone" id="z4">
+    <div class="zhdr" onclick="toggleZ('z4')">
+      <div class="zdot" style="background:#64748b"></div>
+      <div class="zname">⚪ 西门子医疗供应链生态展区</div>
+      <div class="zcnt">13家</div><div class="zarr">▶</div>
+    </div>
+    <div class="zbody">
+      <div class="brow"><div class="bnum">2-A28</div><div class="binfo"><div class="bname">西门子（深圳）磁共振有限公司</div><div class="bdesc">磁共振设备，外国观众最多</div><span class="btag must">必去</span></div></div>
+      <div class="brow"><div class="bnum">2-B01</div><div class="binfo"><div class="bname">贸联特种电缆（常州）有限公司</div><div class="bdesc">医疗级特种电缆</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-B10</div><div class="binfo"><div class="bname">深圳市兴森快捷电路科技股份</div><div class="bdesc">高端PCB快速打样</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-B13</div><div class="binfo"><div class="bname">中航光电科技股份有限公司</div><div class="bdesc">光电连接器，航空级品质</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-B27</div><div class="binfo"><div class="bname">佛山市新地智造技术有限公司</div><div class="bdesc">智能制造服务</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-B28</div><div class="binfo"><div class="bname">深圳市兆兴博拓科技股份有限公司</div><div class="bdesc">EMS电子制造服务</div><span class="btag worth">值得看</span></div></div>
+    </div>
+  </div>
+
+  <div class="zone" id="z5">
+    <div class="zhdr" onclick="toggleZ('z5')">
+      <div class="zdot" style="background:#8b5cf6"></div>
+      <div class="zname">🟣 普门科技供应链生态展区</div>
+      <div class="zcnt">9家</div><div class="zarr">▶</div>
+    </div>
+    <div class="zbody">
+      <div class="brow"><div class="bnum">2-H24</div><div class="binfo"><div class="bname">广州三拓识别技术有限公司</div><div class="bdesc">机器视觉AI识别</div><span class="btag must">必去</span></div></div>
+      <div class="brow"><div class="bnum">2-H25</div><div class="binfo"><div class="bname">深圳市赛飞自动化设备有限公司</div><div class="bdesc">自动化检测设备</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-H33</div><div class="binfo"><div class="bname">深圳市思特光学科技股份有限公司</div><div class="bdesc">医疗光学元件</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-H46</div><div class="binfo"><div class="bname">宝帝流体控制系统（上海）有限公司</div><div class="bdesc">精密流体控制阀门</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-H32</div><div class="binfo"><div class="bname">杭州科百特过滤器材有限公司</div><div class="bdesc">医用过滤器材</div><span class="btag pass">顺路看</span></div></div>
+    </div>
+  </div>
+
+  <div class="zone" id="z6">
+    <div class="zhdr" onclick="toggleZ('z6')">
+      <div class="zdot" style="background:#f97316"></div>
+      <div class="zname">🟠 高端医疗器械创新生态展区</div>
+      <div class="zcnt">4家</div><div class="zarr">▶</div>
+    </div>
+    <div class="zbody">
+      <div class="brow"><div class="bnum">2-L43</div><div class="binfo"><div class="bname">国家高性能医疗器械创新中心</div><div class="bdesc">国家级创新平台</div><span class="btag must">必去</span></div></div>
+      <div class="brow"><div class="bnum">2-D05</div><div class="binfo"><div class="bname">中国科学院深圳先进技术研究院</div><div class="bdesc">科研成果转化平台</div><span class="btag must">必去</span></div></div>
+      <div class="brow"><div class="bnum">2-D32</div><div class="binfo"><div class="bname">苏州中科先进技术研究院有限公司</div><div class="bdesc">医疗器械技术转化</div><span class="btag worth">值得看</span></div></div>
+      <div class="brow"><div class="bnum">2-L43</div><div class="binfo"><div class="bname">深圳市人工智能行业协会</div><div class="bdesc">AI产业资源对接</div><span class="btag worth">值得看</span></div></div>
+    </div>
+  </div>
+  <div class="footer">Powered by AI · MEC 2026 深圳</div>
+</div>
+
+<script>
+const PROXY = 'https://charming-embrace-production-1873.up.railway.app';
+
+const EXHIBITORS = [
+  {name:"华为技术有限公司",booth:"2-C03",desc:"医疗AI基础设施、智慧工厂"},
+  {name:"海克斯康制造智能技术（深圳）有限公司",booth:"2-C57",desc:"AI质检、数字孪生"},
+  {name:"上海发那科智能机械有限公司",booth:"2-G01",desc:"工业机器人No.1"},
+  {name:"深圳市凯瑞奇自动化技术有限公司",booth:"2-A42",desc:"医疗自动化整线"},
+  {name:"东莞恰合达自动化股份有限公司",booth:"2-A70",desc:"自动化装配设备"},
+  {name:"深圳华大基因股份有限公司",booth:"2-C01",desc:"基因测序+AI诊断"},
+  {name:"深圳市迅龙软件有限公司",booth:"2-C01",desc:"医疗供应链管理软件"},
+  {name:"苏州瀚码智能技术有限公司",booth:"2-C36",desc:"智能追溯系统"},
+  {name:"迈得医疗工业设备股份有限公司",booth:"2-C38",desc:"医疗器械专用工业设备"},
+  {name:"冠骋信息技术（苏州）有限公司",booth:"2-C40",desc:"MES制造执行系统"},
+  {name:"东莞市创远光电自动化有限公司",booth:"2-D62",desc:"光电自动化设备"},
+  {name:"深圳市北谌自动化设备有限公司",booth:"2-F06",desc:"非标自动化设备"},
+  {name:"创联三维科技（青岛）有限公司",booth:"2-F69",desc:"3D打印增材制造"},
+  {name:"惠州西文思技术股份有限公司",booth:"2-H01",desc:"医疗电子精密制造"},
+  {name:"厦门麦克玛视电子信息技术有限公司",booth:"2-H04",desc:"机器视觉检测"},
+  {name:"宁波翌波光电科技有限公司",booth:"2-H05",desc:"光电传感探测"},
+  {name:"福瑞博工业自动化（上海）有限公司",booth:"2-H23",desc:"工业自动化整体方案"},
+  {name:"广州三拓识别技术有限公司",booth:"2-H24",desc:"机器视觉AI识别"},
+  {name:"深圳市赛飞自动化设备有限公司",booth:"2-H25",desc:"自动化检测设备"},
+  {name:"深圳市思特光学科技股份有限公司",booth:"2-H33",desc:"医疗光学元件"},
+  {name:"宝帝流体控制系统（上海）有限公司",booth:"2-H46",desc:"精密流体控制"},
+  {name:"西门子（深圳）磁共振有限公司",booth:"2-A28",desc:"磁共振设备"},
+  {name:"贸联特种电缆（常州）有限公司",booth:"2-B01",desc:"医疗级特种电缆"},
+  {name:"中航光电科技股份有限公司",booth:"2-B13",desc:"光电连接器"},
+  {name:"深圳市兴森快捷电路科技股份有限公司",booth:"2-B10",desc:"高端PCB"},
+  {name:"深圳市康冠医疗设备有限公司",booth:"2-A45",desc:"医疗显示终端"},
+  {name:"深圳市巨烽显示科技有限公司",booth:"2-A66",desc:"医疗级显示屏"},
+  {name:"重庆仪仅自动化股份有限公司",booth:"2-A67",desc:"自动化设备"},
+  {name:"深圳市三维机电设备有限公司",booth:"2-A58",desc:"机电一体化设备"},
+  {name:"成都东骏激光股份有限公司",booth:"2-A36",desc:"工业激光设备"},
+  {name:"深圳市锐镭光电科技有限公司",booth:"2-A22",desc:"激光光电元件"},
+  {name:"深圳市精新精密科技有限公司",booth:"2-A04",desc:"精密注塑零件"},
+  {name:"深圳市美连医疗电子股份有限公司",booth:"2-A31",desc:"医疗电子设备"},
+  {name:"沈阳仪表科学研究院有限公司",booth:"2-B45",desc:"仪器仪表研发"},
+  {name:"大连达利凯普科技股份公司",booth:"2-B04",desc:"射频电容元器件"},
+  {name:"安徽博微智能电气有限公司",booth:"2-B07",desc:"智能电气控制"},
+  {name:"沈阳火炬北泰数码科技有限责任公司",booth:"2-B08",desc:"数字化检测设备"},
+  {name:"深圳市兆兴博拓科技股份有限公司",booth:"2-B28",desc:"EMS电子制造服务"},
+  {name:"深圳市深联电路有限公司",booth:"2-B29",desc:"PCB电路板"},
+  {name:"中钧科技（深圳）有限公司",booth:"2-B33",desc:"智能制造方案"},
+  {name:"浙江东尼电子股份有限公司",booth:"2-B40",desc:"医用细钢丝绳"},
+  {name:"深圳市汇川技术股份有限公司",booth:"2-C26",desc:"工业自动化控制"},
+  {name:"海克斯康制造智能技术（深圳）有限公司",booth:"2-D22",desc:"智能制造检测"},
+  {name:"国家高性能医疗器械创新中心",booth:"2-L43",desc:"国家级创新平台"},
+  {name:"中国科学院深圳先进技术研究院",booth:"2-D05",desc:"科研成果转化"},
+  {name:"深圳市人工智能行业协会",booth:"2-L43",desc:"AI产业资源对接"},
+  {name:"深圳嘉立创科技集团股份有限公司",booth:"2-L01",desc:"PCB打样+电子制造"},
+  {name:"杭州科百特过滤器材有限公司",booth:"2-H32",desc:"医用过滤器材"},
+  {name:"佛山集优医疗器械有限公司",booth:"2-H51",desc:"医疗器械整机"},
+  {name:"深圳市云创精密医疗科技有限公司",booth:"2-H69",desc:"精密医疗零件"},
+];
+
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab')[t==='search'?0:1].classList.add('active');
+  document.getElementById('panel-'+t).classList.add('active');
+}
+
+function toggleZ(id){document.getElementById(id).classList.toggle('open')}
+function fill(t){document.getElementById('query').value=t;document.getElementById('query').focus()}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('query').addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();doSearch();}
+  });
+});
+
+async function doSearch(){
+  const q=document.getElementById('query').value.trim();
+  if(!q)return;
+  document.getElementById('welcome').style.display='none';
+  document.getElementById('loading').style.display='block';
+  document.getElementById('results').style.display='none';
+  document.getElementById('errorBox').style.display='none';
+  document.getElementById('queryEcho').style.display='none';
+  document.getElementById('sendBtn').disabled=true;
+
+  const listText=EXHIBITORS.map(e=>`${e.name}（${e.booth}）：${e.desc}`).join('\n');
+  const prompt=`你是深圳国际会展中心2号馆智能导览助手，展会是MEC/iM 2026医疗器械工业展。
+
+用户需求：${q}
+
+参展商：
+${listText}
+
+选出最值得拜访的6-8家，按优先级排序。返回纯JSON：
+{"results":[{"name":"公司名","booth":"展位号","business":"主营15字内","reason":"为何值得去25字内","priority":"必去|值得看|顺路看"}],"route":"最优动线一句话30字内"}`;
+
+  try{
+    const res=await fetch(`${PROXY}/api/chat`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    if(data.error)throw new Error(data.error.message);
+    const text=data.content.map(i=>i.text||'').join('');
+    const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());
+    render(parsed,q);
+  }catch(err){
+    document.getElementById('errorBox').style.display='block';
+    document.getElementById('errorBox').textContent='请求失败，请重试：'+(err.message||'');
+  }finally{
+    document.getElementById('loading').style.display='none';
+    document.getElementById('sendBtn').disabled=false;
+  }
+}
+
+function render(data,q){
+  const echo=document.getElementById('queryEcho');
+  echo.textContent='🔍 '+q;echo.style.display='block';
+  const cards=document.getElementById('cards');cards.innerHTML='';
+  const pc={'必去':'must','值得看':'worth','顺路看':'pass'};
+  data.results.forEach((r,i)=>{
+    const rk=i===0?'r1':i===1?'r2':i===2?'r3':'';
+    cards.innerHTML+=`<div class="rcard" style="animation-delay:${i*.07}s">
+      <div class="rank ${rk}">${i+1}</div>
+      <div class="rbody">
+        <div class="rtop"><div class="rname">${r.name}</div><span class="ptag ${pc[r.priority]||'pass'}">${r.priority}</span></div>
+        <div class="rloc">📍 ${r.booth}</div>
+        <div class="rdesc">${r.business}</div>
+        <div class="rreason">✓ ${r.reason}</div>
+      </div></div>`;
+  });
+  if(data.route){document.getElementById('routeText').textContent=data.route;document.getElementById('routeBox').style.display='block';}
+  document.getElementById('results').style.display='block';
+  setTimeout(()=>document.getElementById('queryEcho').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+</script>
+</body>
+</html>
